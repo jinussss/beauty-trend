@@ -1,0 +1,1309 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>K-Beauty Sector Monitor — Weekly Dashboard</title>
+<meta name="description" content="한국 화장품 섹터 주간 모니터링 대시보드">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,700;9..144,900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+<style>
+  :root {
+    --bg: #f4f0e8;
+    --bg-alt: #ebe5d8;
+    --bg-deep: #e2dbc8;
+    --paper: #fbf8f1;
+    --ink: #1a1814;
+    --ink-soft: #4a4640;
+    --ink-mute: #8a8478;
+    --rule: #d5cfc0;
+    --rule-soft: #e5dfd0;
+    --accent: #8b1f1f;
+    --accent-soft: #b85450;
+    --gold: #a8843a;
+    --gold-soft: #c9a960;
+    --moss: #5d7a3e;
+    --positive: #5d7a3e;
+    --negative: #8b1f1f;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Pretendard', sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(circle at 15% 8%, rgba(139, 31, 31, 0.025) 0%, transparent 35%),
+      radial-gradient(circle at 85% 70%, rgba(168, 132, 58, 0.03) 0%, transparent 40%);
+  }
+
+  /* ─────────── MASTHEAD ─────────── */
+  .masthead {
+    border-bottom: 3px double var(--ink);
+    padding: 24px 40px 18px;
+    background: var(--bg);
+  }
+  .masthead-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--ink-mute);
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .masthead-top .badge {
+    background: var(--accent);
+    color: var(--bg);
+    padding: 3px 10px;
+    letter-spacing: 0.18em;
+    font-weight: 500;
+  }
+  .masthead-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 900;
+    font-size: clamp(40px, 6vw, 72px);
+    line-height: 0.95;
+    letter-spacing: -0.04em;
+    text-align: center;
+  }
+  .masthead-title em {
+    font-style: italic;
+    font-weight: 400;
+    color: var(--accent);
+  }
+  .masthead-tagline {
+    text-align: center;
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 17px;
+    color: var(--ink-soft);
+    margin-top: 6px;
+  }
+
+  /* ─────────── LAYOUT ─────────── */
+  .layout {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 0;
+    max-width: 1480px;
+    margin: 0 auto;
+  }
+
+  /* ─────────── SIDE NAV ─────────── */
+  aside.sidenav {
+    border-right: 1px solid var(--rule);
+    padding: 32px 24px 32px 40px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  .sidenav .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .sidenav ul {
+    list-style: none;
+    margin-bottom: 32px;
+  }
+  .sidenav li {
+    margin-bottom: 14px;
+  }
+  .sidenav a {
+    color: var(--ink-soft);
+    text-decoration: none;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    transition: color 0.2s;
+    font-size: 14px;
+  }
+  .sidenav a:hover, .sidenav a.active {
+    color: var(--accent);
+  }
+  .sidenav a .num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-mute);
+    letter-spacing: 0.05em;
+    min-width: 18px;
+  }
+  .sidenav a:hover .num, .sidenav a.active .num {
+    color: var(--accent);
+  }
+  .sidenav .week-info {
+    background: var(--bg-alt);
+    border-left: 3px solid var(--accent);
+    padding: 14px 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    color: var(--ink-soft);
+    line-height: 1.6;
+  }
+  .sidenav .week-info strong {
+    color: var(--accent);
+    display: block;
+    margin-bottom: 4px;
+    font-size: 11px;
+  }
+
+  /* ─────────── MAIN ─────────── */
+  main {
+    padding: 32px 40px 80px;
+    min-width: 0;
+  }
+
+  /* ─────────── KPI CARDS ─────────── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    border: 1px solid var(--ink);
+    background: var(--paper);
+    margin-bottom: 56px;
+  }
+  .kpi {
+    padding: 22px 24px;
+    border-right: 1px solid var(--rule);
+    position: relative;
+  }
+  .kpi:last-child { border-right: none; }
+  .kpi .kpi-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin-bottom: 14px;
+  }
+  .kpi .kpi-value {
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    font-size: 38px;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+    font-variant-numeric: tabular-nums;
+  }
+  .kpi .kpi-unit {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 18px;
+    color: var(--ink-mute);
+    margin-left: 2px;
+  }
+  .kpi .kpi-delta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+  }
+  .kpi .kpi-delta.up { color: var(--positive); }
+  .kpi .kpi-delta.down { color: var(--negative); }
+  .kpi .kpi-sub {
+    font-size: 11.5px;
+    color: var(--ink-mute);
+    margin-top: 4px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ─────────── SECTION ─────────── */
+  section.module {
+    margin-bottom: 64px;
+    scroll-margin-top: 16px;
+  }
+  .section-head {
+    border-top: 2px solid var(--ink);
+    padding-top: 18px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+  }
+  .section-head .section-num {
+    font-family: 'Fraunces', serif;
+    font-weight: 900;
+    font-size: 36px;
+    color: var(--accent);
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .section-head h2 {
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    font-size: 32px;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+    flex: 1;
+  }
+  .section-head .source {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    align-self: center;
+  }
+  .section-dek {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 17px;
+    color: var(--ink-soft);
+    margin-bottom: 28px;
+    padding-left: 60px;
+    line-height: 1.45;
+    max-width: 760px;
+  }
+
+  /* ─────────── PANELS ─────────── */
+  .panels {
+    display: grid;
+    gap: 20px;
+  }
+  .panels.two { grid-template-columns: 1.5fr 1fr; }
+  .panels.equal { grid-template-columns: 1fr 1fr; }
+  .panels.three { grid-template-columns: 1fr 1fr 1fr; }
+
+  .panel {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    padding: 22px 24px;
+  }
+  .panel-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 18px;
+    padding-bottom: 10px;
+    border-bottom: 1px dotted var(--rule);
+  }
+  .panel-head h3 {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 18px;
+    letter-spacing: -0.01em;
+  }
+  .panel-head .meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .chart-wrap {
+    position: relative;
+    width: 100%;
+    height: 280px;
+  }
+  .chart-wrap.tall { height: 340px; }
+  .chart-wrap.short { height: 220px; }
+
+  /* ─────────── TABLE ─────────── */
+  table.rank {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+  }
+  table.rank thead th {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-mute);
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 2px solid var(--ink);
+    font-weight: 500;
+  }
+  table.rank thead th.right { text-align: right; }
+  table.rank tbody td {
+    padding: 11px 10px;
+    border-bottom: 1px dotted var(--rule);
+    vertical-align: middle;
+  }
+  table.rank tbody td.right { text-align: right; }
+  table.rank tbody tr:hover { background: var(--bg-alt); }
+  table.rank tbody td.rank-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-mute);
+    width: 32px;
+  }
+  table.rank tbody td.brand {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 14.5px;
+  }
+  table.rank tbody td.brand .ticker {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-mute);
+    margin-left: 6px;
+    letter-spacing: 0.04em;
+  }
+  table.rank tbody td.value {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+  }
+  table.rank tbody td.delta { font-family: 'JetBrains Mono', monospace; font-weight: 500; }
+  .delta-up { color: var(--positive); }
+  .delta-down { color: var(--negative); }
+  .delta-flat { color: var(--ink-mute); }
+
+  /* arrow indicators */
+  .arrow {
+    display: inline-block;
+    margin-right: 4px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* movers row badge */
+  .movers-row td.brand {
+    position: relative;
+  }
+  .new-badge {
+    background: var(--accent);
+    color: var(--bg);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px;
+    padding: 2px 6px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+
+  /* ─────────── EDITORIAL NOTE ─────────── */
+  .note {
+    background: linear-gradient(180deg, rgba(168, 132, 58, 0.06), rgba(168, 132, 58, 0.02));
+    border-left: 4px solid var(--gold);
+    padding: 18px 22px;
+    margin-top: 22px;
+    font-family: 'Fraunces', serif;
+    font-size: 16px;
+    line-height: 1.55;
+    color: var(--ink-soft);
+  }
+  .note .note-label {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-style: normal;
+    font-size: 10px;
+    color: var(--gold);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    margin-right: 10px;
+    font-weight: 500;
+  }
+
+  /* ─────────── COUNTRY SHARE BARS ─────────── */
+  .country-list {
+    list-style: none;
+  }
+  .country-list li {
+    display: grid;
+    grid-template-columns: 110px 1fr 80px;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 0;
+    border-bottom: 1px dotted var(--rule);
+    font-size: 13px;
+  }
+  .country-list li:last-child { border-bottom: none; }
+  .country-list .country-name {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 14px;
+  }
+  .country-list .bar-track {
+    background: var(--bg-alt);
+    height: 14px;
+    position: relative;
+    border: 1px solid var(--rule);
+  }
+  .country-list .bar-fill {
+    height: 100%;
+    background: var(--ink);
+  }
+  .country-list .bar-fill.alt { background: var(--accent); }
+  .country-list .bar-fill.gold { background: var(--gold); }
+  .country-list .country-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    text-align: right;
+    color: var(--ink-soft);
+  }
+
+  /* ─────────── TREND TICKER ─────────── */
+  .trending {
+    list-style: none;
+    display: grid;
+    gap: 10px;
+  }
+  .trending li {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 12px;
+    background: var(--bg-alt);
+    border-left: 3px solid var(--gold);
+    font-size: 13px;
+  }
+  .trending li .keyword {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+  }
+  .trending li .growth {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+    color: var(--positive);
+  }
+
+  /* ─────────── FOOTER ─────────── */
+  footer.colophon {
+    border-top: 3px double var(--ink);
+    background: var(--ink);
+    color: var(--bg);
+    padding: 30px 40px;
+    text-align: center;
+  }
+  footer.colophon .credit {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 15px;
+    margin-bottom: 6px;
+  }
+  footer.colophon .meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+  }
+
+  /* ─────────── RESPONSIVE ─────────── */
+  @media (max-width: 1100px) {
+    .layout { grid-template-columns: 1fr; }
+    aside.sidenav {
+      position: relative;
+      height: auto;
+      border-right: none;
+      border-bottom: 1px solid var(--rule);
+      padding: 20px 28px;
+    }
+    .sidenav ul {
+      display: flex;
+      gap: 18px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .sidenav li { margin: 0; }
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .kpi:nth-child(2) { border-right: none; }
+    .kpi:nth-child(1), .kpi:nth-child(2) { border-bottom: 1px solid var(--rule); }
+    .panels.two, .panels.equal, .panels.three { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 640px) {
+    .masthead { padding: 18px 22px 14px; }
+    main { padding: 24px 22px 60px; }
+    .kpi-grid { grid-template-columns: 1fr; }
+    .kpi { border-right: none; border-bottom: 1px solid var(--rule); }
+    .kpi:last-child { border-bottom: none; }
+    .section-head h2 { font-size: 24px; }
+    .section-head .section-num { font-size: 28px; }
+    .section-dek { padding-left: 0; font-size: 15px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-top">
+    <span class="badge">WEEKLY MONITOR</span>
+    <span id="week-display">WEEK 19 · 2026·05·06</span>
+    <span>K-Beauty Sector · Jinwoo</span>
+  </div>
+  <h1 class="masthead-title">K-Beauty <em>Pulse</em></h1>
+  <p class="masthead-tagline">한국 화장품 섹터 주간 모니터링 — 수출·美 수입·구글 트렌드·아마존·틱톡샵·큐텐</p>
+</header>
+
+<div class="layout">
+
+  <aside class="sidenav">
+    <div class="label">Sections</div>
+    <ul>
+      <li><a href="#snapshot"><span class="num">00</span>스냅샷</a></li>
+      <li><a href="#exports"><span class="num">01</span>화장품 수출</a></li>
+      <li><a href="#us-imports"><span class="num">02</span>美 수입 비중</a></li>
+      <li><a href="#google-trends"><span class="num">03</span>구글 트렌드</a></li>
+      <li><a href="#amazon"><span class="num">04</span>아마존 랭킹</a></li>
+      <li><a href="#tiktok"><span class="num">05</span>틱톡샵 랭킹</a></li>
+      <li><a href="#qoo10"><span class="num">06</span>큐텐 메가와리</a></li>
+    </ul>
+    <div class="week-info">
+      <strong>UPDATE CYCLE</strong>
+      Every Monday<br>
+      Last: <span id="last-update">2026·05·06</span><br>
+      Next: <span id="next-update">2026·05·13</span>
+    </div>
+  </aside>
+
+  <main>
+
+    <!-- ═══════════════ SNAPSHOT ═══════════════ -->
+    <section class="module" id="snapshot">
+      <div class="kpi-grid">
+        <div class="kpi">
+          <div class="kpi-label">韓 화장품 수출 (M)</div>
+          <div class="kpi-value">$<span id="kpi-export">847</span><span class="kpi-unit">M</span></div>
+          <div class="kpi-delta up" id="kpi-export-delta">▲ +15.3% YoY · +2.1% MoM</div>
+          <div class="kpi-sub">2026·04 잠정 · 관세청</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">對美 수출 (M)</div>
+          <div class="kpi-value">$<span id="kpi-us">182</span><span class="kpi-unit">M</span></div>
+          <div class="kpi-delta up" id="kpi-us-delta">▲ +28.4% YoY · 비중 21.5%</div>
+          <div class="kpi-sub">2026·04 · 미국 시장 1위</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">美 수입시장 韓 점유율</div>
+          <div class="kpi-value"><span id="kpi-share">22.4</span><span class="kpi-unit">%</span></div>
+          <div class="kpi-delta up" id="kpi-share-delta">▲ +1.8pp YoY · vs 佛 18.1%</div>
+          <div class="kpi-sub">USITC · YTD 누계</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">TikTok Shop 美 1위</div>
+          <div class="kpi-value" style="font-size:30px;"><span id="kpi-top-brand">medicube</span></div>
+          <div class="kpi-delta" id="kpi-top-gmv" style="color:var(--gold);">$31.2M GMV (지난 30일)</div>
+          <div class="kpi-sub">FastMoss · K-Beauty 카테고리</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════ 01 · 화장품 수출 ═══════════════ -->
+    <section class="module" id="exports">
+      <div class="section-head">
+        <div class="section-num">01</div>
+        <h2>한국 화장품 수출</h2>
+        <div class="source">Source: 관세청 · KITA · 식약처</div>
+      </div>
+      <p class="section-dek">월간 수출 추이, 국가별 비중, 카테고리별 분해. 한국 화장품의 글로벌 침투력을 매크로 단위로 추적함.</p>
+
+      <div class="panels two">
+        <div class="panel">
+          <div class="panel-head">
+            <h3>월별 수출액 추이 (2024–2026)</h3>
+            <div class="meta">USD M · 잠정</div>
+          </div>
+          <div class="chart-wrap"><canvas id="chart-export-trend"></canvas></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <h3>카테고리별 비중</h3>
+            <div class="meta">YTD 2026</div>
+          </div>
+          <div class="chart-wrap"><canvas id="chart-export-cat"></canvas></div>
+        </div>
+      </div>
+
+      <div class="panels two" style="margin-top: 20px;">
+        <div class="panel">
+          <div class="panel-head">
+            <h3>주요 수출국 (2026 YTD)</h3>
+            <div class="meta">USD M · YoY</div>
+          </div>
+          <ul class="country-list" id="country-list"></ul>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <h3>이번 주 주목 포인트</h3>
+            <div class="meta">Editorial</div>
+          </div>
+          <div class="note" style="margin-top:0;">
+            <span class="note-label">관전 포인트</span>
+            對美 수출 4월 잠정치 $182M, YoY +28.4%로 中 의존도 추가 하락. 反대(對中) 비중 26% → 21%대 진입 시 인디 브랜드 EV/Sales 멀티플 디커플링 가속 가능.
+          </div>
+          <div class="note">
+            <span class="note-label">리스크</span>
+            대형 ODM(한국콜마·코스맥스) 가동률 임계 도달 시 신규 캐파 증설 사이클 진입. 인디 브랜드 ODM 의존도 점검 필요.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════ 02 · 美 수입 비중 ═══════════════ -->
+    <section class="module" id="us-imports">
+      <div class="section-head">
+        <div class="section-num">02</div>
+        <h2>미국 화장품 수입시장 점유율</h2>
+        <div class="source">Source: USITC · US Census · DataWeb</div>
+      </div>
+      <p class="section-dek">미국이 수입하는 화장품(HS 33) 시장에서 한국이 차지하는 비중과 경쟁국(프랑스·일본·중국·캐나다) 추이.</p>
+
+      <div class="panels equal">
+        <div class="panel">
+          <div class="panel-head">
+            <h3>국가별 점유율 추이</h3>
+            <div class="meta">% of US Cosmetic Imports</div>
+          </div>
+          <div class="chart-wrap tall"><canvas id="chart-us-share"></canvas></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <h3>HS Code별 한국 비중</h3>
+            <div class="meta">2026 YTD</div>
+          </div>
+          <table class="rank">
+            <thead>
+              <tr>
+                <th>HS Code</th>
+                <th>제품군</th>
+                <th class="right">韓 점유율</th>
+                <th class="right">YoY</th>
+              </tr>
+            </thead>
+            <tbody id="hs-table"></tbody>
+          </table>
+          <div class="note">
+            <span class="note-label">핵심 변화</span>
+            HS 3304 (스킨케어) 한국 점유율 27.8%로 프랑스 추월. HS 3303 (향수)는 여전히 프랑스 우세이나 한국 진입 가속.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════ 03 · 구글 트렌드 ═══════════════ -->
+    <section class="module" id="google-trends">
+      <div class="section-head">
+        <div class="section-num">03</div>
+        <h2>구글 트렌드 — 브랜드 검색 수요</h2>
+        <div class="source">Source: Google Trends · 글로벌</div>
+      </div>
+      <p class="section-dek">주요 K-Beauty 브랜드의 글로벌 검색 트렌드. 신규 진입 vs 성숙 브랜드 모멘텀 비교.</p>
+
+      <div class="panels two">
+        <div class="panel">
+          <div class="panel-head">
+            <h3>주요 브랜드 검색 트렌드 (52주)</h3>
+            <div class="meta">Index 0–100 · Worldwide</div>
+          </div>
+          <div class="chart-wrap tall"><canvas id="chart-trends"></canvas></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <h3>이번 주 급상승 키워드</h3>
+            <div class="meta">WoW · Worldwide</div>
+          </div>
+          <ul class="trending" id="trending-list"></ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════ 04 · 아마존 랭킹 ═══════════════ -->
+    <section class="module" id="amazon">
+      <div class="section-head">
+        <div class="section-num">04</div>
+        <h2>아마존 美 — 한국 브랜드 랭킹</h2>
+        <div class="source">Source: Amazon BSR · Helium 10 · Jungle Scout</div>
+      </div>
+      <p class="section-dek">미국 아마존 Beauty 카테고리 한국 브랜드 베스트셀러 랭킹과 BSR(Best Seller Rank) 변화 추적.</p>
+
+      <div class="panels two">
+        <div class="panel">
+          <div class="panel-head">
+            <h3>Top 12 한국 브랜드 BSR</h3>
+            <div class="meta">Beauty &amp; Personal Care · Weekly Avg</div>
+          </div>
+          <table class="rank">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Brand</th>
+                <th>Best-selling SKU</th>
+                <th class="right">BSR</th>
+                <th class="right">WoW</th>
+              </tr>
+            </thead>
+            <tbody id="amazon-table"></tbody>
+          </table>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <h3>카테고리 1위 트래커</h3>
+            <div class="meta">Sub-category · Korean Brand</div>
+          </div>
+          <table class="rank">
+            <thead>
+              <tr>
+                <th>Sub-Category</th>
+                <th>Korean #1</th>
+                <th class="right">Days at #1</th>
+              </tr>
+            </thead>
+            <tbody id="amazon-cat-table"></tbody>
+          </table>
+          <div class="note">
+            <span class="note-label">신규 진입</span>
+            Mixsoon Bean Essence 이번 주 Beauty Top 100 첫 진입(rank 87). Anua Heartleaf 토너 6주 연속 Toner 카테고리 1위 유지.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════ 05 · 틱톡샵 랭킹 ═══════════════ -->
+    <section class="module" id="tiktok">
+      <div class="section-head">
+        <div class="section-num">05</div>
+        <h2>TikTok Shop 美 — 한국 브랜드 GMV 랭킹</h2>
+        <div class="source">Source: FastMoss · Kalodata · TikTok Shop Analytics</div>
+      </div>
+      <p class="section-dek">미국 TikTok Shop 한국 브랜드 주간 GMV 및 30일 누적 랭킹. medicube 압도적 1위 지속, 추격 그룹 변동성 점검.</p>
+
+      <div class="panels two">
+        <div class="panel">
+          <div class="panel-head">
+            <h3>Top 15 한국 브랜드 (지난 30일)</h3>
+            <div class="meta">GMV · USD</div>
+          </div>
+          <div class="chart-wrap tall"><canvas id="chart-tiktok"></canvas></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <h3>주간 변화 — Movers &amp; Shakers</h3>
+            <div class="meta">WoW GMV Δ</div>
+          </div>
+          <table class="rank">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Brand</th>
+                <th class="right">GMV (7d)</th>
+                <th class="right">WoW</th>
+              </tr>
+            </thead>
+            <tbody id="tiktok-movers"></tbody>
+          </table>
+          <div class="note">
+            <span class="note-label">하이라이트</span>
+            medicube Zero Pore Pad 단일 SKU 7일 GMV $4.2M, 베스트셀러 단독 1위. TIRTIR Mask Fit Cushion 신규 색상 출시 효과로 WoW +47%.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════ 06 · 큐텐 메가와리 ═══════════════ -->
+    <section class="module" id="qoo10">
+      <div class="section-head">
+        <div class="section-num">06</div>
+        <h2>큐텐 메가와리 — 일본 시장 K-Beauty</h2>
+        <div class="source">Source: Qoo10 Japan · Mega Sale Rankings</div>
+      </div>
+      <p class="section-dek">일본 큐텐 메가와리 행사 기간 한국 화장품 브랜드 판매 랭킹. 일본 K-Beauty 침투력의 가장 직접적인 지표.</p>
+
+      <div class="panels two">
+        <div class="panel">
+          <div class="panel-head">
+            <h3>메가와리 Top 15 한국 브랜드</h3>
+            <div class="meta">최근 행사 누적 판매량</div>
+          </div>
+          <table class="rank">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Brand</th>
+                <th>Hero Product</th>
+                <th class="right">판매 지수</th>
+                <th class="right">전회 대비</th>
+              </tr>
+            </thead>
+            <tbody id="qoo10-table"></tbody>
+          </table>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <h3>일본 K-Beauty 점유율</h3>
+            <div class="meta">메가와리 화장품 카테고리 中</div>
+          </div>
+          <div class="chart-wrap"><canvas id="chart-qoo10-share"></canvas></div>
+          <div class="note">
+            <span class="note-label">트렌드</span>
+            TIRTIR·VT·anua 三강 구도 형성. 일본 시장 진입 1년 미만 신규 브랜드(numbuzin·skin1004) 중위권 안착 중. 4Q 메가와리 시즌 GMV 데이터가 글로벌 K-Beauty 모멘텀 leading indicator로 작동.
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer class="colophon">
+  <p class="credit">— Weekly K-Beauty Pulse · 매주 월요일 업데이트 —</p>
+  <p class="meta">Data Sources: 관세청 · USITC · Google Trends · FastMoss · Helium 10 · Qoo10 Japan</p>
+</footer>
+
+<script>
+/* ════════════════════════════════════════════════════════════════
+   📊 DASHBOARD DATA — 매주 이 객체만 수정하면 전체 차트 자동 반영됨
+   ════════════════════════════════════════════════════════════════ */
+const dashData = {
+
+  /* ─── META ─── */
+  meta: {
+    weekOf: '2026-05-06',
+    weekNumber: 19,
+    nextUpdate: '2026-05-13'
+  },
+
+  /* ─── 01. 한국 화장품 수출 ─── */
+  exports: {
+    // 월별 수출액 (USD millions) — 최근 24개월
+    timeseries: {
+      labels: ['24·05','24·06','24·07','24·08','24·09','24·10','24·11','24·12',
+               '25·01','25·02','25·03','25·04','25·05','25·06','25·07','25·08',
+               '25·09','25·10','25·11','25·12','26·01','26·02','26·03','26·04'],
+      total: [712,735,748,762,781,795,818,832,775,790,815,830,850,873,891,905,
+              912,898,925,942,810,825,852,847]
+    },
+    // 카테고리별 (YTD 2026)
+    byCategory: {
+      labels: ['스킨케어','메이크업','향수','헤어','클렌징'],
+      values: [62.4, 18.7, 4.2, 8.3, 6.4]  // % share
+    },
+    // 국가별 (YTD 2026, USD M)
+    byCountry: [
+      {name: '中國', value: 892, share: 26.4, yoy: -8.2},
+      {name: '美國', value: 728, share: 21.5, yoy: 28.4},
+      {name: '日本', value: 521, share: 15.4, yoy: 18.7},
+      {name: '香港', value: 287, share: 8.5, yoy: -3.1},
+      {name: 'Việt Nam', value: 178, share: 5.3, yoy: 22.5},
+      {name: 'Россия', value: 142, share: 4.2, yoy: 11.8},
+      {name: 'Singapore', value: 98, share: 2.9, yoy: 15.4},
+      {name: '臺灣', value: 87, share: 2.6, yoy: 7.9}
+    ]
+  },
+
+  /* ─── 02. 美 수입 비중 ─── */
+  usImports: {
+    // 분기별 점유율
+    timeseries: {
+      labels: ['24·Q2','24·Q3','24·Q4','25·Q1','25·Q2','25·Q3','25·Q4','26·Q1'],
+      Korea:   [18.2, 19.1, 19.8, 20.3, 21.1, 21.8, 22.0, 22.4],
+      France:  [21.4, 20.8, 20.1, 19.5, 18.9, 18.5, 18.3, 18.1],
+      Japan:   [8.7,  8.9,  9.2,  9.4,  9.5,  9.7,  9.8,  9.9],
+      Canada:  [11.2, 10.9, 10.7, 10.5, 10.3, 10.2, 10.1, 10.0],
+      China:   [14.8, 14.2, 13.6, 13.1, 12.6, 12.1, 11.7, 11.4]
+    },
+    // HS Code별 한국 비중
+    hsBreakdown: [
+      {hs: '3304', name: 'Skincare / Make-up', share: 27.8, yoy: 3.4},
+      {hs: '3305', name: 'Hair preparations',  share: 18.2, yoy: 2.1},
+      {hs: '3307', name: 'Shaving / deodorant', share: 9.4, yoy: 1.2},
+      {hs: '3303', name: 'Perfumes',           share: 4.1,  yoy: 0.6}
+    ]
+  },
+
+  /* ─── 03. 구글 트렌드 ─── */
+  googleTrends: {
+    timeseries: {
+      labels: ['25·19','25·24','25·29','25·34','25·39','25·44','25·49','26·02','26·07','26·12','26·17','26·19'],
+      brands: {
+        'medicube':           [42, 48, 55, 62, 68, 71, 74, 78, 82, 85, 88, 91],
+        'Anua':               [38, 42, 48, 53, 58, 62, 65, 67, 70, 72, 74, 76],
+        'Beauty of Joseon':   [55, 58, 60, 62, 64, 65, 66, 67, 68, 69, 70, 71],
+        'Cosrx':              [65, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54],
+        'TIRTIR':             [25, 28, 32, 38, 45, 52, 58, 62, 65, 68, 70, 72]
+      }
+    },
+    trending: [
+      {keyword: 'medicube collagen pad', growth: '+340%'},
+      {keyword: 'tirtir mask fit cushion shade 23N', growth: '+285%'},
+      {keyword: 'anua heartleaf toner', growth: '+167%'},
+      {keyword: 'k beauty serum', growth: '+92%'},
+      {keyword: 'numbuzin no.5', growth: '+78%'},
+      {keyword: 'beauty of joseon sunscreen', growth: '+45%'}
+    ]
+  },
+
+  /* ─── 04. 아마존 랭킹 ─── */
+  amazon: {
+    bsrTable: [
+      {brand: 'Anua',                sku: 'Heartleaf 77% Toner',           bsr: 42,    wow: 'up',   delta: '▲ 8'},
+      {brand: 'Beauty of Joseon',    sku: 'Glow Sunscreen SPF50+',         bsr: 58,    wow: 'up',   delta: '▲ 3'},
+      {brand: 'Cosrx',               sku: 'Snail 96 Mucin Power Essence',  bsr: 71,    wow: 'down', delta: '▼ 12'},
+      {brand: 'medicube',            sku: 'Zero Pore Pad 2.0',             bsr: 89,    wow: 'up',   delta: '▲ 24'},
+      {brand: 'Mixsoon',             sku: 'Bean Essence',                  bsr: 87,    wow: 'new',  delta: 'NEW'},
+      {brand: 'Mediheal',            sku: 'Tea Tree Mask Pack',            bsr: 142,   wow: 'flat', delta: '— 0'},
+      {brand: 'Laneige',             sku: 'Lip Sleeping Mask',             bsr: 156,   wow: 'down', delta: '▼ 5'},
+      {brand: 'Round Lab',           sku: 'Dokdo Toner',                   bsr: 178,   wow: 'up',   delta: '▲ 11'},
+      {brand: 'TIRTIR',              sku: 'Mask Fit Red Cushion',          bsr: 198,   wow: 'up',   delta: '▲ 32'},
+      {brand: 'Skin1004',            sku: 'Madagascar Centella Toner',     bsr: 215,   wow: 'up',   delta: '▲ 6'},
+      {brand: 'Numbuzin',            sku: 'No.5 Vitamin Serum',            bsr: 245,   wow: 'up',   delta: '▲ 18'},
+      {brand: 'Goodal',              sku: 'Green Tangerine Vita C',        bsr: 287,   wow: 'down', delta: '▼ 9'}
+    ],
+    categoryLeaders: [
+      {cat: 'Toner',           leader: 'Anua Heartleaf',          days: 42},
+      {cat: 'Sunscreen',       leader: 'Beauty of Joseon Glow',   days: 28},
+      {cat: 'Sheet Mask',      leader: 'Mediheal Tea Tree',       days: 156},
+      {cat: 'Lip Mask',        leader: 'Laneige Lip Sleeping',    days: 89},
+      {cat: 'Snail Essence',   leader: 'Cosrx Snail 96',          days: 12},
+      {cat: 'Cushion',         leader: 'TIRTIR Mask Fit Red',     days: 8}
+    ]
+  },
+
+  /* ─── 05. TikTok Shop ─── */
+  tiktok: {
+    top15: {
+      labels: ['medicube','TIRTIR','Anua','mixsoon','Skin1004','BoJ','Numbuzin',
+               'Cosrx','Round Lab','Laneige','Sulwhasoo','Goodal','Mediheal','Some By Mi','Dr.G'],
+      gmv: [31.2, 18.5, 14.8, 11.2, 9.4, 8.7, 7.2, 6.8, 5.9, 5.1, 4.6, 4.2, 3.8, 3.4, 2.9]
+    },
+    movers: [
+      {brand: 'TIRTIR',     gmv7d: '$4.8M',  wow: 'up',   delta: '+47%'},
+      {brand: 'medicube',   gmv7d: '$8.1M',  wow: 'up',   delta: '+12%'},
+      {brand: 'Mixsoon',    gmv7d: '$2.9M',  wow: 'up',   delta: '+38%'},
+      {brand: 'Numbuzin',   gmv7d: '$1.8M',  wow: 'up',   delta: '+28%'},
+      {brand: 'Skin1004',   gmv7d: '$2.4M',  wow: 'up',   delta: '+15%'},
+      {brand: 'Anua',       gmv7d: '$3.6M',  wow: 'down', delta: '-8%'},
+      {brand: 'Cosrx',      gmv7d: '$1.7M',  wow: 'down', delta: '-12%'},
+      {brand: 'BoJ',        gmv7d: '$2.1M',  wow: 'flat', delta: '+1%'}
+    ]
+  },
+
+  /* ─── 06. Qoo10 메가와리 ─── */
+  qoo10: {
+    rankings: [
+      {brand: 'TIRTIR',     hero: 'Mask Fit Cushion',         index: 100, prev: 'up',   delta: '▲ 1'},
+      {brand: 'VT',         hero: 'Reedle Shot 100',          index: 94,  prev: 'down', delta: '▼ 1'},
+      {brand: 'Anua',       hero: 'Heartleaf Toner',          index: 87,  prev: 'up',   delta: '▲ 2'},
+      {brand: 'Mediheal',   hero: 'Madecassoside Mask',       index: 78,  prev: 'flat', delta: '— 0'},
+      {brand: 'Innisfree',  hero: 'Green Tea Serum',          index: 72,  prev: 'down', delta: '▼ 2'},
+      {brand: 'Romand',     hero: 'Juicy Lasting Tint',       index: 68,  prev: 'up',   delta: '▲ 3'},
+      {brand: 'Laneige',    hero: 'Lip Sleeping Mask',        index: 64,  prev: 'flat', delta: '— 0'},
+      {brand: 'CLIO',       hero: 'Kill Cover Cushion',       index: 58,  prev: 'down', delta: '▼ 1'},
+      {brand: 'Peripera',   hero: 'Ink Velvet',               index: 52,  prev: 'up',   delta: '▲ 4'},
+      {brand: 'Etude',      hero: 'Soon Jung 2x Barrier',     index: 47,  prev: 'flat', delta: '— 0'},
+      {brand: 'Numbuzin',   hero: 'No.5 Vitamin Serum',       index: 42,  prev: 'up',   delta: '▲ 5'},
+      {brand: '3CE',        hero: 'Velvet Lip Tint',          index: 38,  prev: 'down', delta: '▼ 2'},
+      {brand: 'Skin1004',   hero: 'Centella Ampoule',         index: 35,  prev: 'up',   delta: 'NEW'},
+      {brand: 'Cosrx',      hero: 'Snail 96 Essence',         index: 32,  prev: 'down', delta: '▼ 3'},
+      {brand: 'Beauty of J',hero: 'Rice Toner',               index: 29,  prev: 'up',   delta: '▲ 1'}
+    ],
+    shareTrend: {
+      labels: ['24·Q4','25·Q1','25·Q2','25·Q3','25·Q4','26·Q1'],
+      Korea:  [38, 42, 47, 52, 56, 61],
+      Japan:  [41, 38, 35, 31, 28, 25],
+      Other:  [21, 20, 18, 17, 16, 14]
+    }
+  }
+};
+
+/* ════════════════════════════════════════════════════════════════
+   🎨 CHART RENDERING
+   ════════════════════════════════════════════════════════════════ */
+
+// Common Chart.js defaults
+Chart.defaults.font.family = "'JetBrains Mono', 'Pretendard', monospace";
+Chart.defaults.font.size = 11;
+Chart.defaults.color = '#4a4640';
+Chart.defaults.plugins.legend.labels.font = { size: 11, family: "'JetBrains Mono', monospace" };
+Chart.defaults.plugins.tooltip.titleFont = { family: "'Fraunces', serif", size: 14 };
+Chart.defaults.plugins.tooltip.bodyFont = { family: "'JetBrains Mono', monospace", size: 12 };
+Chart.defaults.plugins.tooltip.backgroundColor = '#1a1814';
+Chart.defaults.plugins.tooltip.padding = 10;
+
+const palette = {
+  ink: '#1a1814',
+  accent: '#8b1f1f',
+  gold: '#a8843a',
+  moss: '#5d7a3e',
+  rule: '#d5cfc0',
+  series: ['#1a1814', '#8b1f1f', '#a8843a', '#5d7a3e', '#b85450', '#8a8478']
+};
+
+/* ─── 01. Export Trend ─── */
+new Chart(document.getElementById('chart-export-trend'), {
+  type: 'line',
+  data: {
+    labels: dashData.exports.timeseries.labels,
+    datasets: [{
+      label: '월간 수출액 (USD M)',
+      data: dashData.exports.timeseries.total,
+      borderColor: palette.accent,
+      backgroundColor: 'rgba(139, 31, 31, 0.08)',
+      borderWidth: 2,
+      fill: true,
+      tension: 0.3,
+      pointRadius: 0,
+      pointHoverRadius: 5
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { beginAtZero: false, grid: { color: '#e5dfd0' }, ticks: { callback: v => '$' + v + 'M' } },
+      x: { grid: { display: false }, ticks: { maxTicksLimit: 12 } }
+    }
+  }
+});
+
+/* ─── 01. Export Category Donut ─── */
+new Chart(document.getElementById('chart-export-cat'), {
+  type: 'doughnut',
+  data: {
+    labels: dashData.exports.byCategory.labels,
+    datasets: [{
+      data: dashData.exports.byCategory.values,
+      backgroundColor: palette.series,
+      borderColor: '#fbf8f1', borderWidth: 2
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'right' },
+      tooltip: { callbacks: { label: c => c.label + ': ' + c.parsed + '%' } }
+    },
+    cutout: '55%'
+  }
+});
+
+/* ─── 01. Country bars ─── */
+const countryList = document.getElementById('country-list');
+const maxCountryVal = Math.max(...dashData.exports.byCountry.map(c => c.value));
+dashData.exports.byCountry.forEach(c => {
+  const fillPct = (c.value / maxCountryVal) * 100;
+  const yoyClass = c.yoy >= 0 ? 'delta-up' : 'delta-down';
+  const yoySign = c.yoy >= 0 ? '+' : '';
+  const fillColor = c.name === '美國' ? 'alt' : c.name === '日本' ? 'gold' : '';
+  countryList.insertAdjacentHTML('beforeend', `
+    <li>
+      <span class="country-name">${c.name}</span>
+      <span class="bar-track"><span class="bar-fill ${fillColor}" style="width: ${fillPct}%"></span></span>
+      <span class="country-val">$${c.value}M <span class="${yoyClass}">${yoySign}${c.yoy}%</span></span>
+    </li>
+  `);
+});
+
+/* ─── 02. US Imports Share ─── */
+new Chart(document.getElementById('chart-us-share'), {
+  type: 'line',
+  data: {
+    labels: dashData.usImports.timeseries.labels,
+    datasets: [
+      { label: 'Korea',   data: dashData.usImports.timeseries.Korea,  borderColor: palette.accent, borderWidth: 3, tension: 0.3, pointRadius: 3 },
+      { label: 'France',  data: dashData.usImports.timeseries.France, borderColor: palette.ink,    borderWidth: 1.5, tension: 0.3, pointRadius: 0, borderDash: [4,3] },
+      { label: 'China',   data: dashData.usImports.timeseries.China,  borderColor: palette.moss,   borderWidth: 1.5, tension: 0.3, pointRadius: 0, borderDash: [2,2] },
+      { label: 'Japan',   data: dashData.usImports.timeseries.Japan,  borderColor: palette.gold,   borderWidth: 1.5, tension: 0.3, pointRadius: 0 },
+      { label: 'Canada',  data: dashData.usImports.timeseries.Canada, borderColor: '#8a8478',      borderWidth: 1.5, tension: 0.3, pointRadius: 0 }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'bottom' } },
+    scales: {
+      y: { ticks: { callback: v => v + '%' }, grid: { color: '#e5dfd0' } },
+      x: { grid: { display: false } }
+    }
+  }
+});
+
+/* ─── 02. HS Code Table ─── */
+const hsTable = document.getElementById('hs-table');
+dashData.usImports.hsBreakdown.forEach(row => {
+  const yoyClass = row.yoy >= 0 ? 'delta-up' : 'delta-down';
+  const yoySign = row.yoy >= 0 ? '+' : '';
+  hsTable.insertAdjacentHTML('beforeend', `
+    <tr>
+      <td class="brand">HS ${row.hs}</td>
+      <td>${row.name}</td>
+      <td class="right value">${row.share}%</td>
+      <td class="right delta ${yoyClass}">${yoySign}${row.yoy}pp</td>
+    </tr>
+  `);
+});
+
+/* ─── 03. Google Trends ─── */
+const trendDatasets = Object.entries(dashData.googleTrends.timeseries.brands).map(([brand, data], i) => ({
+  label: brand,
+  data: data,
+  borderColor: palette.series[i % palette.series.length],
+  backgroundColor: 'transparent',
+  borderWidth: 2, tension: 0.35, pointRadius: 0
+}));
+new Chart(document.getElementById('chart-trends'), {
+  type: 'line',
+  data: { labels: dashData.googleTrends.timeseries.labels, datasets: trendDatasets },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'bottom' } },
+    scales: {
+      y: { min: 0, max: 100, grid: { color: '#e5dfd0' } },
+      x: { grid: { display: false } }
+    }
+  }
+});
+
+/* ─── 03. Trending list ─── */
+const trendingList = document.getElementById('trending-list');
+dashData.googleTrends.trending.forEach(item => {
+  trendingList.insertAdjacentHTML('beforeend', `
+    <li>
+      <span class="keyword">${item.keyword}</span>
+      <span class="growth">${item.growth}</span>
+    </li>
+  `);
+});
+
+/* ─── 04. Amazon BSR Table ─── */
+const amazonTable = document.getElementById('amazon-table');
+dashData.amazon.bsrTable.forEach((row, i) => {
+  const dCls = row.wow === 'up' ? 'delta-up' : row.wow === 'down' ? 'delta-down' : 'delta-flat';
+  const newBadge = row.wow === 'new' ? '<span class="new-badge">NEW</span>' : '';
+  amazonTable.insertAdjacentHTML('beforeend', `
+    <tr>
+      <td class="rank-num">${String(i+1).padStart(2,'0')}</td>
+      <td class="brand">${row.brand}${newBadge}</td>
+      <td>${row.sku}</td>
+      <td class="right value">#${row.bsr.toLocaleString()}</td>
+      <td class="right delta ${dCls}">${row.delta}</td>
+    </tr>
+  `);
+});
+
+/* ─── 04. Category Leaders ─── */
+const amazonCatTable = document.getElementById('amazon-cat-table');
+dashData.amazon.categoryLeaders.forEach(c => {
+  amazonCatTable.insertAdjacentHTML('beforeend', `
+    <tr>
+      <td>${c.cat}</td>
+      <td class="brand">${c.leader}</td>
+      <td class="right value">${c.days}d</td>
+    </tr>
+  `);
+});
+
+/* ─── 05. TikTok Top 15 horizontal bar ─── */
+new Chart(document.getElementById('chart-tiktok'), {
+  type: 'bar',
+  data: {
+    labels: dashData.tiktok.top15.labels,
+    datasets: [{
+      label: 'GMV (지난 30일, USD M)',
+      data: dashData.tiktok.top15.gmv,
+      backgroundColor: dashData.tiktok.top15.gmv.map((v, i) => i === 0 ? palette.accent : palette.ink),
+      borderWidth: 0
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { label: c => '$' + c.parsed.x.toFixed(1) + 'M' } }
+    },
+    scales: {
+      x: { ticks: { callback: v => '$' + v + 'M' }, grid: { color: '#e5dfd0' } },
+      y: { grid: { display: false } }
+    }
+  }
+});
+
+/* ─── 05. TikTok Movers Table ─── */
+const tiktokMovers = document.getElementById('tiktok-movers');
+dashData.tiktok.movers.forEach((row, i) => {
+  const dCls = row.wow === 'up' ? 'delta-up' : row.wow === 'down' ? 'delta-down' : 'delta-flat';
+  const arrow = row.wow === 'up' ? '▲' : row.wow === 'down' ? '▼' : '—';
+  tiktokMovers.insertAdjacentHTML('beforeend', `
+    <tr>
+      <td class="rank-num">${String(i+1).padStart(2,'0')}</td>
+      <td class="brand">${row.brand}</td>
+      <td class="right value">${row.gmv7d}</td>
+      <td class="right delta ${dCls}">${arrow} ${row.delta}</td>
+    </tr>
+  `);
+});
+
+/* ─── 06. Qoo10 Megawari Table ─── */
+const qoo10Table = document.getElementById('qoo10-table');
+dashData.qoo10.rankings.forEach((row, i) => {
+  const dCls = row.prev === 'up' ? 'delta-up' : row.prev === 'down' ? 'delta-down' : 'delta-flat';
+  const newBadge = row.delta === 'NEW' ? '<span class="new-badge">NEW</span>' : '';
+  qoo10Table.insertAdjacentHTML('beforeend', `
+    <tr>
+      <td class="rank-num">${String(i+1).padStart(2,'0')}</td>
+      <td class="brand">${row.brand}${newBadge}</td>
+      <td>${row.hero}</td>
+      <td class="right value">${row.index}</td>
+      <td class="right delta ${dCls}">${row.delta}</td>
+    </tr>
+  `);
+});
+
+/* ─── 06. Qoo10 Share Trend ─── */
+new Chart(document.getElementById('chart-qoo10-share'), {
+  type: 'line',
+  data: {
+    labels: dashData.qoo10.shareTrend.labels,
+    datasets: [
+      { label: 'Korea',  data: dashData.qoo10.shareTrend.Korea,  backgroundColor: palette.accent, borderColor: palette.accent, fill: 'origin', tension: 0.3 },
+      { label: 'Japan',  data: dashData.qoo10.shareTrend.Japan,  backgroundColor: palette.ink,    borderColor: palette.ink,    fill: '-1', tension: 0.3 },
+      { label: 'Other',  data: dashData.qoo10.shareTrend.Other,  backgroundColor: '#8a8478',      borderColor: '#8a8478',      fill: '-1', tension: 0.3 }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'bottom' } },
+    scales: {
+      y: { stacked: true, max: 100, ticks: { callback: v => v + '%' }, grid: { color: '#e5dfd0' } },
+      x: { stacked: true, grid: { display: false } }
+    }
+  }
+});
+
+/* ─── Update meta info ─── */
+document.getElementById('week-display').textContent =
+  `WEEK ${dashData.meta.weekNumber} · ${dashData.meta.weekOf.replace(/-/g,'·')}`;
+document.getElementById('last-update').textContent = dashData.meta.weekOf.replace(/-/g,'·');
+document.getElementById('next-update').textContent = dashData.meta.nextUpdate.replace(/-/g,'·');
+
+/* ─── Active section nav highlight ─── */
+const navLinks = document.querySelectorAll('.sidenav a');
+const sections = document.querySelectorAll('section.module');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      navLinks.forEach(l => l.classList.remove('active'));
+      const id = e.target.id;
+      const link = document.querySelector(`.sidenav a[href="#${id}"]`);
+      if (link) link.classList.add('active');
+    }
+  });
+}, { rootMargin: '-30% 0px -50% 0px' });
+sections.forEach(s => observer.observe(s));
+</script>
+
+</body>
+</html>

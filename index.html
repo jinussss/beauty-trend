@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IR Research Notes — Jinwoo</title>
+<meta name="description" content="국내·해외 주식, 바이오·테크 리서치 노트 아카이브">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,700;9..144,900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">
+
+<style>
+  :root {
+    --bg: #f4f0e8;
+    --bg-alt: #ebe5d8;
+    --ink: #1a1814;
+    --ink-soft: #4a4640;
+    --ink-mute: #8a8478;
+    --rule: #d5cfc0;
+    --accent: #8b1f1f;
+    --accent-soft: #b85450;
+    --gold: #a8843a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Pretendard', 'JetBrains Mono', sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(circle at 20% 10%, rgba(139, 31, 31, 0.03) 0%, transparent 40%),
+      radial-gradient(circle at 80% 80%, rgba(168, 132, 58, 0.04) 0%, transparent 40%);
+  }
+
+  /* ─────────── HEADER ─────────── */
+  .masthead {
+    border-bottom: 3px double var(--ink);
+    padding: 28px 48px 20px;
+    background: var(--bg);
+    position: relative;
+  }
+
+  .masthead-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-mute);
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .masthead-top .edition { font-weight: 500; }
+  .masthead-top .date { font-variant-numeric: tabular-nums; }
+
+  .masthead-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 900;
+    font-size: clamp(48px, 8vw, 96px);
+    line-height: 0.95;
+    letter-spacing: -0.04em;
+    text-align: center;
+    margin: 8px 0;
+  }
+  .masthead-title em {
+    font-style: italic;
+    font-weight: 400;
+    color: var(--accent);
+  }
+
+  .masthead-tagline {
+    text-align: center;
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 18px;
+    color: var(--ink-soft);
+    margin-top: 6px;
+  }
+
+  /* ─────────── NAV ─────────── */
+  nav.categories {
+    display: flex;
+    justify-content: center;
+    gap: 0;
+    padding: 16px 48px;
+    background: var(--ink);
+    color: var(--bg);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    flex-wrap: wrap;
+  }
+  nav.categories a {
+    color: var(--bg);
+    text-decoration: none;
+    padding: 4px 22px;
+    border-right: 1px solid rgba(244, 240, 232, 0.2);
+    transition: color 0.2s;
+  }
+  nav.categories a:last-child { border-right: none; }
+  nav.categories a:hover { color: var(--gold); }
+
+  /* ─────────── CONTAINER ─────────── */
+  .container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 48px;
+  }
+
+  /* ─────────── SEARCH ─────────── */
+  .search-bar {
+    margin: 40px 0 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 12px;
+  }
+  .search-bar svg {
+    width: 18px; height: 18px; stroke: var(--ink-mute);
+  }
+  .search-bar input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    color: var(--ink);
+    padding: 6px 0;
+  }
+  .search-bar input::placeholder { color: var(--ink-mute); font-style: italic; }
+  .search-stats {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  /* ─────────── FEATURED ─────────── */
+  .featured {
+    margin: 48px 0 64px;
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 48px;
+    padding-bottom: 48px;
+    border-bottom: 1px solid var(--rule);
+  }
+  @media (max-width: 880px) {
+    .featured { grid-template-columns: 1fr; }
+  }
+
+  .featured-main {
+    border-left: 4px solid var(--accent);
+    padding-left: 32px;
+  }
+  .featured-main .kicker {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 500;
+    margin-bottom: 14px;
+  }
+  .featured-main h2 {
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    font-size: clamp(32px, 4vw, 52px);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin-bottom: 16px;
+  }
+  .featured-main h2 a { color: var(--ink); text-decoration: none; }
+  .featured-main h2 a:hover { color: var(--accent); }
+  .featured-main .dek {
+    font-family: 'Fraunces', serif;
+    font-size: 19px;
+    font-style: italic;
+    color: var(--ink-soft);
+    line-height: 1.4;
+    margin-bottom: 18px;
+  }
+  .featured-main .meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
+
+  .featured-side {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .featured-side .item {
+    padding-bottom: 22px;
+    border-bottom: 1px dotted var(--rule);
+  }
+  .featured-side .item:last-child { border: none; }
+  .featured-side .item .tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 6px;
+  }
+  .featured-side .item h3 {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 19px;
+    line-height: 1.25;
+  }
+  .featured-side .item h3 a { color: var(--ink); text-decoration: none; }
+  .featured-side .item h3 a:hover { color: var(--accent); }
+  .featured-side .item .meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-mute);
+    margin-top: 6px;
+    letter-spacing: 0.05em;
+  }
+
+  /* ─────────── SECTION ─────────── */
+  section.category {
+    margin-bottom: 72px;
+    scroll-margin-top: 24px;
+  }
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--ink);
+  }
+  .section-head h2 {
+    font-family: 'Fraunces', serif;
+    font-weight: 900;
+    font-size: 36px;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+  }
+  .section-head .count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 0;
+    border-top: 1px solid var(--rule);
+  }
+
+  .card {
+    padding: 24px 28px 24px 0;
+    border-right: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    transition: background 0.2s;
+    position: relative;
+  }
+  .card:last-child:after,
+  .card:nth-child(3n):after {
+    /* placeholder, browsers treat differently */
+  }
+  .card:hover {
+    background: var(--bg-alt);
+  }
+  .card-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    margin-bottom: 8px;
+  }
+  .card h3 {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 21px;
+    line-height: 1.2;
+    margin-bottom: 8px;
+  }
+  .card h3 a { color: var(--ink); text-decoration: none; }
+  .card h3 a:hover { color: var(--accent); }
+  .card .ticker {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-mute);
+    margin-bottom: 10px;
+    letter-spacing: 0.05em;
+  }
+  .card .summary {
+    font-size: 14px;
+    color: var(--ink-soft);
+    line-height: 1.45;
+    margin-bottom: 14px;
+  }
+  .card .footer {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    border-top: 1px dotted var(--rule);
+    padding-top: 10px;
+  }
+  .card .footer .type { color: var(--gold); font-weight: 500; }
+
+  /* ─────────── FOOTER ─────────── */
+  footer.colophon {
+    border-top: 3px double var(--ink);
+    padding: 40px 48px;
+    margin-top: 80px;
+    text-align: center;
+    background: var(--ink);
+    color: var(--bg);
+  }
+  footer.colophon .credit {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 16px;
+    margin-bottom: 8px;
+  }
+  footer.colophon .meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+  }
+
+  .empty-state {
+    padding: 32px 0;
+    text-align: center;
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    color: var(--ink-mute);
+  }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-top">
+    <span class="edition">Vol. I · Equity Research Archive</span>
+    <span class="date" id="today">2026 · MMVI</span>
+    <span>Jinwoo · IR Notes</span>
+  </div>
+  <h1 class="masthead-title">The Research <em>Ledger</em></h1>
+  <p class="masthead-tagline">국내·해외 주식, 바이오·테크 리서치 노트 아카이브</p>
+</header>
+
+<nav class="categories">
+  <a href="#domestic">국내 주식</a>
+  <a href="#overseas">해외 주식</a>
+  <a href="#biotech">바이오·제약</a>
+  <a href="#tech">테크·반도체</a>
+  <a href="#widgets">인터랙티브 위젯</a>
+</nav>
+
+<div class="container">
+
+  <div class="search-bar">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.5-4.5"/></svg>
+    <input type="text" id="search" placeholder="기업명, 티커, 키워드로 필터…" autocomplete="off">
+    <span class="search-stats" id="stats">전체 표시</span>
+  </div>
+
+  <!-- ─────────── FEATURED ─────────── -->
+  <section class="featured">
+    <article class="featured-main">
+      <div class="kicker">★ Featured Report</div>
+      <h2><a href="reports/overseas/tesla-2026.html">Tesla, Inc. — Robotaxi 사업화 시점과 자동차 OEM 마진 디커플링 시나리오</a></h2>
+      <p class="dek">Cybercab 양산 로드맵, Optimus 상용화 가시성, 그리고 자율주행 데이터 자산이 멀티플 정당화에 미치는 영향에 대한 종합 분석.</p>
+      <div class="meta">TSLA · NASDAQ · Updated 2026·05·06</div>
+    </article>
+    <aside class="featured-side">
+      <div class="item">
+        <div class="tag">Most Read</div>
+        <h3><a href="#">Ralph Lauren — 4Q FY2026 어닝콜 정리</a></h3>
+        <div class="meta">RL · NYSE</div>
+      </div>
+      <div class="item">
+        <div class="tag">New</div>
+        <h3><a href="#">Nepes 탐방 — 첨단 패키징 FOPLP 진척</a></h3>
+        <div class="meta">033640 · KOSDAQ</div>
+      </div>
+      <div class="item">
+        <div class="tag">Pinned</div>
+        <h3><a href="#">Korean ADC 6사 비교 — 리가켐·알테오젠·에이비엘</a></h3>
+        <div class="meta">바이오 테마</div>
+      </div>
+    </aside>
+  </section>
+
+  <!-- ─────────── DOMESTIC ─────────── -->
+  <section class="category" id="domestic">
+    <div class="section-head">
+      <h2>국내 주식 / Domestic Equity</h2>
+      <span class="count">04 · ENTRIES</span>
+    </div>
+    <div class="grid">
+      <article class="card" data-keywords="orion 오리온 271560 corp day 콥데이">
+        <div class="card-num">№ 001</div>
+        <h3><a href="#">Orion 콥데이</a></h3>
+        <div class="ticker">271560 · KOSPI</div>
+        <p class="summary">중국·베트남 시장 회복 및 신규 카테고리 확장 전략, 환율 헤지 정책 점검.</p>
+        <div class="footer"><span class="type">Corp Day</span><span>2026·04</span></div>
+      </article>
+      <article class="card" data-keywords="oci 010060 holdings 폴리실리콘">
+        <div class="card-num">№ 002</div>
+        <h3><a href="#">OCI홀딩스 콥데이</a></h3>
+        <div class="ticker">010060 · KOSPI</div>
+        <p class="summary">폴리실리콘 가격 사이클, 말레이시아 증설, 카본블랙 사업부 분리 영향.</p>
+        <div class="footer"><span class="type">Corp Day</span><span>2026·04</span></div>
+      </article>
+      <article class="card" data-keywords="posco international 047050 conf call">
+        <div class="card-num">№ 003</div>
+        <h3><a href="#">POSCO International 컨콜</a></h3>
+        <div class="ticker">047050 · KOSPI</div>
+        <p class="summary">에너지 사업 안정화, 곡물·트레이딩 마진 변동성, 친환경 인프라 투자 가이던스.</p>
+        <div class="footer"><span class="type">Conf Call</span><span>2026·04</span></div>
+      </article>
+      <article class="card" data-keywords="nepes 033640 advanced packaging foplp 패키징">
+        <div class="card-num">№ 004</div>
+        <h3><a href="#">Nepes 탐방노트</a></h3>
+        <div class="ticker">033640 · KOSDAQ</div>
+        <p class="summary">Fan-out WLP, FOPLP, CPB 차세대 패키징 기술 진척과 고객사 다변화 진행 상황.</p>
+        <div class="footer"><span class="type">Site Visit</span><span>2026·05</span></div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ─────────── OVERSEAS ─────────── -->
+  <section class="category" id="overseas">
+    <div class="section-head">
+      <h2>해외 주식 / Overseas Equity</h2>
+      <span class="count">04 · ENTRIES</span>
+    </div>
+    <div class="grid">
+      <article class="card" data-keywords="tesla tsla cybercab optimus robotaxi">
+        <div class="card-num">№ 005</div>
+        <h3><a href="#">Tesla 종합 리포트</a></h3>
+        <div class="ticker">TSLA · NASDAQ</div>
+        <p class="summary">Robotaxi 사업화 시점, Optimus 양산 가시성, FSD 데이터 자산의 멀티플 임팩트.</p>
+        <div class="footer"><span class="type">Deep Dive</span><span>2026·05</span></div>
+      </article>
+      <article class="card" data-keywords="coca cola ko beverage">
+        <div class="card-num">№ 006</div>
+        <h3><a href="#">Coca-Cola Co.</a></h3>
+        <div class="ticker">KO · NYSE</div>
+        <p class="summary">신흥국 가격 인상 여력, 헬시 음료 포트폴리오 전환, 자본배분 정책 분석.</p>
+        <div class="footer"><span class="type">Deep Dive</span><span>2026·04</span></div>
+      </article>
+      <article class="card" data-keywords="nike nke footwear apparel">
+        <div class="card-num">№ 007</div>
+        <h3><a href="#">Nike Inc.</a></h3>
+        <div class="ticker">NKE · NYSE</div>
+        <p class="summary">DTC 채널 재정비, On Running·Hoka 위협 강도, 중국 회복 모멘텀 점검.</p>
+        <div class="footer"><span class="type">Deep Dive</span><span>2026·04</span></div>
+      </article>
+      <article class="card" data-keywords="ralph lauren rl luxury apparel">
+        <div class="card-num">№ 008</div>
+        <h3><a href="#">Ralph Lauren — 4Q FY26 컨콜</a></h3>
+        <div class="ticker">RL · NYSE</div>
+        <p class="summary">유럽·아시아 풀프라이스 모멘텀, 마진 가이던스, 럭셔리 포지셔닝 강화 전략.</p>
+        <div class="footer"><span class="type">Earnings Call</span><span>2026·05</span></div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ─────────── BIOTECH ─────────── -->
+  <section class="category" id="biotech">
+    <div class="section-head">
+      <h2>바이오 · 제약 / Biotech &amp; Pharma</h2>
+      <span class="count">03 · ENTRIES</span>
+    </div>
+    <div class="grid">
+      <article class="card" data-keywords="rznomics 알지노믹스 rz-001 hcc aacr">
+        <div class="card-num">№ 009</div>
+        <h3><a href="#">Rznomics — RZ-001 HCC</a></h3>
+        <div class="ticker">알지노믹스 · 비상장</div>
+        <p class="summary">AACR 2026 RECIST ORR 38.5% / mRECIST 53.8% 데이터, Roche·Genentech 파트너십 가능성.</p>
+        <div class="footer"><span class="type">Pipeline</span><span>2026·04</span></div>
+      </article>
+      <article class="card" data-keywords="korean adc 리가켐 알테오젠 에이비엘 인투셀">
+        <div class="card-num">№ 010</div>
+        <h3><a href="#">Korean ADC 6사 비교</a></h3>
+        <div class="ticker">테마 리서치</div>
+        <p class="summary">리가켐바이오·알테오젠·에이비엘바이오·에임드·인투셀·오름 ADC 플랫폼 cross-비교.</p>
+        <div class="footer"><span class="type">Theme</span><span>2026·03</span></div>
+      </article>
+      <article class="card" data-keywords="mash rezdiffra semaglutide survodutide dd01">
+        <div class="card-num">№ 011</div>
+        <h3><a href="#">MASH 치료제 시장 분석</a></h3>
+        <div class="ticker">테마 리서치</div>
+        <p class="summary">Rezdiffra·semaglutide·survodutide·DD01 비교, 임상 endpoint 통계적 유의성 점검.</p>
+        <div class="footer"><span class="type">Theme</span><span>2026·03</span></div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ─────────── TECH ─────────── -->
+  <section class="category" id="tech">
+    <div class="section-head">
+      <h2>테크 · 반도체 / Tech &amp; Semiconductor</h2>
+      <span class="count">02 · ENTRIES</span>
+    </div>
+    <div class="grid">
+      <article class="card" data-keywords="hbm samsung sk hynix micron">
+        <div class="card-num">№ 012</div>
+        <h3><a href="#">HBM 3사 경쟁 구도</a></h3>
+        <div class="ticker">테마 리서치</div>
+        <p class="summary">SK하이닉스·삼성전자·Micron HBM3E·HBM4 로드맵, NVIDIA 큐얼 비중 변화 추적.</p>
+        <div class="footer"><span class="type">Theme</span><span>2026·02</span></div>
+      </article>
+      <article class="card" data-keywords="datacenter power 효성 ls 현대 일렉트릭">
+        <div class="card-num">№ 013</div>
+        <h3><a href="#">데이터센터 전력 인프라</a></h3>
+        <div class="ticker">테마 리서치</div>
+        <p class="summary">765kV 송전, HVDC, onsite power generation. 효성중공업·LS일렉·현대일렉 수혜 점검.</p>
+        <div class="footer"><span class="type">Theme</span><span>2026·02</span></div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ─────────── WIDGETS ─────────── -->
+  <section class="category" id="widgets">
+    <div class="section-head">
+      <h2>인터랙티브 위젯 / Interactive Widgets</h2>
+      <span class="count">02 · ENTRIES</span>
+    </div>
+    <div class="grid">
+      <article class="card" data-keywords="value chain tesla diagram">
+        <div class="card-num">№ 014</div>
+        <h3><a href="#">Tesla 밸류체인 다이어그램</a></h3>
+        <div class="ticker">Interactive · D3.js</div>
+        <p class="summary">상위 3단계 공급망 ~ 하위 3단계 고객사 인터랙티브 매핑, 매출 비중 hover 표시.</p>
+        <div class="footer"><span class="type">Widget</span><span>2026·05</span></div>
+      </article>
+      <article class="card" data-keywords="ralph lauren earnings calls comparison">
+        <div class="card-num">№ 015</div>
+        <h3><a href="#">RL 4분기 컨콜 비교 위젯</a></h3>
+        <div class="ticker">Interactive · Tabs</div>
+        <p class="summary">Ralph Lauren 4Q FY25 ~ 3Q FY26 컨콜 내용 6-tab 비교 인터페이스.</p>
+        <div class="footer"><span class="type">Widget</span><span>2026·04</span></div>
+      </article>
+    </div>
+  </section>
+
+  <div class="empty-state" id="empty" style="display:none;">검색 결과가 없음. 다른 키워드로 시도해보세요.</div>
+
+</div>
+
+<footer class="colophon">
+  <p class="credit">— Crafted with research, conviction, and Claude. —</p>
+  <p class="meta">Hosted on GitHub Pages · Built by Jinwoo · <span id="year">2026</span></p>
+</footer>
+
+<script>
+  // 날짜 표기
+  const months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  const now = new Date();
+  document.getElementById('today').textContent =
+    `${now.getFullYear()} · ${months[now.getMonth()]} ${String(now.getDate()).padStart(2,'0')}`;
+  document.getElementById('year').textContent = now.getFullYear();
+
+  // 검색 필터
+  const search = document.getElementById('search');
+  const cards = document.querySelectorAll('.card');
+  const empty = document.getElementById('empty');
+  const stats = document.getElementById('stats');
+
+  search.addEventListener('input', e => {
+    const q = e.target.value.toLowerCase().trim();
+    let visible = 0;
+    cards.forEach(c => {
+      const text = (c.dataset.keywords + ' ' + c.textContent).toLowerCase();
+      const match = !q || text.includes(q);
+      c.style.display = match ? '' : 'none';
+      if (match) visible++;
+    });
+
+    // 카테고리 섹션 비우기 처리
+    document.querySelectorAll('section.category').forEach(sec => {
+      const visibleCards = sec.querySelectorAll('.card:not([style*="none"])').length;
+      sec.style.display = visibleCards === 0 && q ? 'none' : '';
+    });
+
+    if (q) {
+      stats.textContent = `${visible}개 일치`;
+      empty.style.display = visible === 0 ? 'block' : 'none';
+    } else {
+      stats.textContent = '전체 표시';
+      empty.style.display = 'none';
+    }
+  });
+</script>
+
+</body>
+</html>

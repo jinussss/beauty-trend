@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trend Monitor — Real-time Google Trends</title>
+<meta name="description" content="실시간 구글 트렌드 모니터 with ticker mapping">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">
+
+<style>
+  :root {
+    --bg: #fafafa;
+    --card-bg: #ffffff;
+    --border: #e5e7eb;
+    --border-soft: #f0f0f0;
+    --ink: #111827;
+    --ink-soft: #4b5563;
+    --ink-mute: #9ca3af;
+    --positive: #10b981;
+    --negative: #ef4444;
+    --accent: #111827;
+    --geo-us: #3b82f6;
+    --fav: #ef4444;
+    --tag-bg: #f3f4f6;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Pretendard', sans-serif;
+    font-size: 14px;
+    line-height: 1.4;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ═════════ HEADER ═════════ */
+  header.app-header {
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  header.app-header h1 {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  header.app-header .meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-mute);
+    display: flex;
+    gap: 16px;
+    align-items: center;
+  }
+  header.app-header .meta .pulse {
+    display: inline-block;
+    width: 6px; height: 6px;
+    background: var(--positive);
+    border-radius: 50%;
+    margin-right: 6px;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* ═════════ TABS ═════════ */
+  .tabs {
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 28px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    overflow-x: auto;
+  }
+  .tabs.secondary {
+    padding-top: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .tab {
+    padding: 6px 14px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--ink-soft);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s;
+    font-weight: 500;
+  }
+  .tab:hover { background: var(--tag-bg); color: var(--ink); }
+  .tab.active {
+    background: var(--accent);
+    color: #ffffff;
+    border-color: var(--accent);
+  }
+
+  /* ═════════ CONTROLS ═════════ */
+  .controls {
+    padding: 14px 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    background: var(--bg);
+    flex-wrap: wrap;
+  }
+  .search {
+    flex: 1;
+    max-width: 320px;
+    padding: 9px 14px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--card-bg);
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .search:focus { border-color: var(--accent); }
+  .search::placeholder { color: var(--ink-mute); }
+
+  .sort-group {
+    display: flex;
+    gap: 4px;
+    background: var(--card-bg);
+    padding: 3px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+  .sort-btn {
+    padding: 5px 12px;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 12px;
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .sort-btn:hover { color: var(--ink); }
+  .sort-btn.active {
+    background: var(--accent);
+    color: #ffffff;
+  }
+
+  /* ═════════ STATS BAR ═════════ */
+  .stats-bar {
+    padding: 6px 28px 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-mute);
+    display: flex;
+    justify-content: space-between;
+    background: var(--bg);
+  }
+  .stats-bar .right { display: flex; gap: 16px; }
+
+  /* ═════════ GRID ═════════ */
+  .grid {
+    padding: 4px 28px 40px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 10px;
+    background: var(--bg);
+  }
+  @media (min-width: 1280px) {
+    .grid { grid-template-columns: repeat(6, 1fr); }
+  }
+  @media (min-width: 1600px) {
+    .grid { grid-template-columns: repeat(7, 1fr); }
+  }
+
+  /* ═════════ CARD ═════════ */
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px 8px;
+    display: flex;
+    flex-direction: column;
+    transition: box-shadow 0.15s, border-color 0.15s;
+    cursor: pointer;
+    min-height: 130px;
+  }
+  .card:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  .card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+  .card-keyword {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1.25;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+  .card-fav {
+    background: none;
+    border: none;
+    color: var(--ink-mute);
+    cursor: pointer;
+    font-size: 13px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    transition: color 0.15s;
+    line-height: 1;
+  }
+  .card-fav:hover { color: var(--fav); }
+  .card-fav.active { color: var(--fav); }
+  .card-fav .fav-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+  }
+
+  .card-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+  }
+  .ticker {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    background: var(--tag-bg);
+    color: var(--ink-soft);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+  .change {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    font-weight: 600;
+  }
+  .change.up { color: var(--positive); }
+  .change.down { color: var(--negative); }
+  .geo-badge {
+    background: var(--geo-us);
+    color: #ffffff;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    padding: 1px 5px;
+    border-radius: 2px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
+
+  .card-last {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-mute);
+    margin-bottom: 4px;
+  }
+
+  .spark {
+    width: 100%;
+    height: 50px;
+    margin-top: auto;
+  }
+  .spark path.line {
+    fill: none;
+    stroke: var(--ink);
+    stroke-width: 1.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .spark path.area {
+    fill: rgba(0,0,0,0.04);
+    stroke: none;
+  }
+  .spark .end-dot {
+    fill: var(--ink);
+  }
+  .card.up .spark path.line { stroke: var(--positive); }
+  .card.up .spark path.area { fill: rgba(16, 185, 129, 0.06); }
+  .card.up .spark .end-dot { fill: var(--positive); }
+  .card.down .spark path.line { stroke: var(--negative); }
+  .card.down .spark path.area { fill: rgba(239, 68, 68, 0.06); }
+  .card.down .spark .end-dot { fill: var(--negative); }
+
+  /* ═════════ EMPTY STATE ═════════ */
+  .empty {
+    grid-column: 1 / -1;
+    padding: 60px 0;
+    text-align: center;
+    color: var(--ink-mute);
+    font-size: 14px;
+  }
+  .empty .icon {
+    font-size: 32px;
+    margin-bottom: 12px;
+    opacity: 0.5;
+  }
+
+  .loading {
+    grid-column: 1 / -1;
+    padding: 60px 0;
+    text-align: center;
+    color: var(--ink-mute);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+  }
+  .loading::after {
+    content: '';
+    display: inline-block;
+    width: 6px; height: 6px;
+    background: var(--ink-mute);
+    border-radius: 50%;
+    margin-left: 8px;
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+
+  /* responsive */
+  @media (max-width: 640px) {
+    header.app-header { flex-direction: column; align-items: flex-start; gap: 8px; padding: 14px 18px; }
+    .tabs, .stats-bar { padding-left: 18px; padding-right: 18px; }
+    .controls { padding: 12px 18px; }
+    .grid { padding-left: 18px; padding-right: 18px; grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <h1>Trend Monitor</h1>
+  <div class="meta">
+    <span><span class="pulse"></span>LIVE</span>
+    <span id="last-updated">—</span>
+    <span id="total-keywords">— keywords</span>
+  </div>
+</header>
+
+<nav class="tabs primary" id="primary-tabs"></nav>
+<nav class="tabs secondary" id="secondary-tabs"></nav>
+
+<div class="controls">
+  <input type="text" class="search" id="search" placeholder="검색: keyword">
+  <div class="sort-group" id="sort-group">
+    <button class="sort-btn active" data-sort="default">기본</button>
+    <button class="sort-btn" data-sort="yoy-desc">YoY↑</button>
+    <button class="sort-btn" data-sort="yoy-asc">YoY↓</button>
+    <button class="sort-btn" data-sort="value-desc">값↑</button>
+    <button class="sort-btn" data-sort="value-asc">값↓</button>
+    <button class="sort-btn" data-sort="favorites">★</button>
+  </div>
+</div>
+
+<div class="stats-bar">
+  <span id="filter-info">전체 표시</span>
+  <span class="right">
+    <span id="up-count">— up</span>
+    <span id="down-count">— down</span>
+  </span>
+</div>
+
+<div class="grid" id="grid">
+  <div class="loading">trends.json 로딩 중</div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   TREND MONITOR — Live Google Trends Dashboard
+   매시간/6시간마다 GitHub Actions가 trends.json 자동 갱신
+   ═══════════════════════════════════════════════════════ */
+
+const STATE = {
+  data: [],
+  meta: {},
+  primary: '전체',
+  secondary: '전체',
+  search: '',
+  sort: 'default',
+  favorites: new Set(JSON.parse(localStorage.getItem('tm-favs') || '[]'))
+};
+
+const PRIMARY_ORDER = ['전체', '1연대 food', '2연대 fashion', '3연대 house', '4연대 hobby', '9연대 기타'];
+
+/* ─── DATA LOADING ─── */
+async function loadData() {
+  try {
+    const res = await fetch('./data/trends.json?t=' + Date.now());
+    if (!res.ok) throw new Error('fetch failed');
+    const json = await res.json();
+    STATE.data = json.data || [];
+    STATE.meta = json.metadata || {};
+  } catch (e) {
+    console.warn('trends.json 로드 실패, 인라인 fallback 사용', e);
+    // Inline fallback: 이미지에 보이는 4연대 hobby 키워드 샘플
+    const fallback = generateFallbackData();
+    STATE.data = fallback.data;
+    STATE.meta = fallback.metadata;
+  }
+  render();
+}
+
+function generateFallbackData() {
+  // 이미지 reference 그대로 샘플 데이터 (랜덤 sparkline)
+  const samples = [
+    {kw:'pokemon cards', t:'EBAY', g:'US', f:1, last:94, yoy:57.3, cat:'4연대 hobby', sub:'5대대 팬덤/수집품'},
+    {kw:'pokemon rare', t:'EBAY', g:'US', last:94, yoy:90.2, cat:'4연대 hobby', sub:'5대대 팬덤/수집품'},
+    {kw:'Fox Float', t:'FOXF', last:93, yoy:22.4, cat:'4연대 hobby', sub:'3대대 파워스포츠'},
+    {kw:'Harley-Davidson', t:'HOG', f:1, last:92, yoy:99.3, cat:'4연대 hobby', sub:'2대대 모빌리티'},
+    {kw:'Garmin Instinct', t:'GRMN', last:88, yoy:59.6, cat:'4연대 hobby', sub:'1대대 피트니스'},
+    {kw:'Harley Softail', t:'HOG', last:88, yoy:32.9, cat:'4연대 hobby', sub:'2대대 모빌리티'},
+    {kw:'ebay rare', t:'EBAY', f:1, last:87, yoy:238.6, cat:'4연대 hobby', sub:'5대대 팬덤/수집품'},
+    {kw:'mountain bike suspension', t:'FOXF', last:84, yoy:167.6, cat:'4연대 hobby', sub:'3대대 파워스포츠'},
+    {kw:'Titleist driver', t:'GOLF', last:84, yoy:56.2, cat:'4연대 hobby', sub:'3대대 파워스포츠'},
+    {kw:'ebay watches', t:'EBAY', last:84, yoy:71.2, cat:'4연대 hobby', sub:'5대대 팬덤/수집품'},
+    {kw:'Bilibili download', t:'BILI', last:83, yoy:26.2, cat:'4연대 hobby', sub:'5대대 팬덤/수집품'},
+    {kw:'Super Mario toys', t:'JAKK', last:81, yoy:807.8, cat:'4연대 hobby', sub:'5대대 팬덤/수집품'},
+    {kw:'FOX shocks', t:'FOXF', last:80, yoy:47.5, cat:'4연대 hobby', sub:'3대대 파워스포츠'},
+    {kw:'Callaway golf clubs', t:'MODG', last:80, yoy:40.2, cat:'4연대 hobby', sub:'3대대 파워스포츠'},
+    {kw:'Jayco', t:'THO', last:79, yoy:28.9, cat:'4연대 hobby', sub:'4대대 아웃도어/캠핑'},
+    {kw:'Sony headphones', t:'SONY', last:75, yoy:198.2, cat:'4연대 hobby', sub:'5대대 팬덤/수집품'},
+    {kw:'Bilibili', t:'BILI', last:75, yoy:-11.1, cat:'4연대 hobby', sub:'5대대 팬덤/수집품'},
+    {kw:'Stride Fitness', t:'XPOF', last:72, yoy:363.4, cat:'4연대 hobby', sub:'1대대 피트니스'},
+    {kw:'Hasbro', t:'HAS', last:71, yoy:153.6, cat:'4연대 hobby', sub:'5대대 팬덤/수집품'},
+    {kw:'gaming headset', t:'TBCH', last:71, yoy:427.4, cat:'4연대 hobby', sub:'5대대 팬덤/수집품'},
+  ];
+  const data = samples.map(s => ({
+    keyword: s.kw, ticker: s.t, geo: s.g || '',
+    favorite: !!s.f, favoriteRank: s.f || null,
+    category: s.cat, subcategory: s.sub,
+    lastValue: s.last,
+    yoyChange: s.yoy,
+    wowChange: 0,
+    trendValues: makeRandomSpark(s.yoy)
+  }));
+  return {
+    data,
+    metadata: { lastUpdated: new Date().toISOString(), totalKeywords: data.length, source: 'fallback-sample' }
+  };
+}
+
+function makeRandomSpark(yoy) {
+  // Generate plausible 52-week sparkline ending around current value
+  const arr = [];
+  let v = 30 + Math.random() * 30;
+  const drift = yoy / 52 / 2;
+  for (let i = 0; i < 52; i++) {
+    v += drift + (Math.random() - 0.5) * 8;
+    v = Math.max(5, Math.min(100, v));
+    arr.push(Math.round(v));
+  }
+  return arr;
+}
+
+/* ─── RENDERING ─── */
+function render() {
+  renderTabs();
+  renderGrid();
+  renderMeta();
+}
+
+function renderTabs() {
+  // Primary tabs
+  const cats = new Set(['전체']);
+  STATE.data.forEach(d => cats.add(d.category));
+  const orderedCats = PRIMARY_ORDER.filter(c => cats.has(c)).concat(
+    [...cats].filter(c => !PRIMARY_ORDER.includes(c))
+  );
+
+  const primaryEl = document.getElementById('primary-tabs');
+  primaryEl.innerHTML = orderedCats.map(c =>
+    `<button class="tab ${c === STATE.primary ? 'active' : ''}" data-cat="${c}">${c}</button>`
+  ).join('');
+  primaryEl.querySelectorAll('.tab').forEach(b => {
+    b.onclick = () => { STATE.primary = b.dataset.cat; STATE.secondary = '전체'; render(); };
+  });
+
+  // Secondary tabs (depend on primary)
+  const subs = new Set(['전체']);
+  if (STATE.primary !== '전체') {
+    STATE.data.filter(d => d.category === STATE.primary).forEach(d => subs.add(d.subcategory));
+  } else {
+    STATE.data.forEach(d => subs.add(d.subcategory));
+  }
+  const sortedSubs = ['전체'].concat([...subs].filter(s => s !== '전체').sort());
+
+  const secondaryEl = document.getElementById('secondary-tabs');
+  secondaryEl.innerHTML = sortedSubs.map(s =>
+    `<button class="tab ${s === STATE.secondary ? 'active' : ''}" data-sub="${s}">${s}</button>`
+  ).join('');
+  secondaryEl.querySelectorAll('.tab').forEach(b => {
+    b.onclick = () => { STATE.secondary = b.dataset.sub; render(); };
+  });
+}
+
+function renderGrid() {
+  let items = STATE.data.slice();
+
+  // Filter
+  if (STATE.primary !== '전체') items = items.filter(d => d.category === STATE.primary);
+  if (STATE.secondary !== '전체') items = items.filter(d => d.subcategory === STATE.secondary);
+  if (STATE.search) {
+    const q = STATE.search.toLowerCase();
+    items = items.filter(d =>
+      d.keyword.toLowerCase().includes(q) ||
+      (d.ticker || '').toLowerCase().includes(q)
+    );
+  }
+
+  // Sort
+  switch (STATE.sort) {
+    case 'yoy-desc': items.sort((a, b) => b.yoyChange - a.yoyChange); break;
+    case 'yoy-asc':  items.sort((a, b) => a.yoyChange - b.yoyChange); break;
+    case 'value-desc': items.sort((a, b) => b.lastValue - a.lastValue); break;
+    case 'value-asc':  items.sort((a, b) => a.lastValue - b.lastValue); break;
+    case 'favorites':
+      items.sort((a, b) => {
+        const af = STATE.favorites.has(a.keyword) ? 0 : 1;
+        const bf = STATE.favorites.has(b.keyword) ? 0 : 1;
+        return af - bf || b.lastValue - a.lastValue;
+      });
+      break;
+    default:
+      // 기본: lastValue 내림차순 (이미지 reference 따라)
+      items.sort((a, b) => b.lastValue - a.lastValue);
+  }
+
+  // Render
+  const grid = document.getElementById('grid');
+  if (items.length === 0) {
+    grid.innerHTML = '<div class="empty"><div class="icon">⚲</div>일치하는 키워드가 없음.</div>';
+  } else {
+    grid.innerHTML = items.map(renderCard).join('');
+    grid.querySelectorAll('.card-fav').forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        toggleFavorite(btn.dataset.kw);
+      };
+    });
+    grid.querySelectorAll('.card').forEach(card => {
+      card.onclick = () => {
+        const kw = card.dataset.kw;
+        const geo = card.dataset.geo || '';
+        const url = `https://trends.google.com/trends/explore?q=${encodeURIComponent(kw)}${geo ? '&geo=' + geo : ''}`;
+        window.open(url, '_blank');
+      };
+    });
+  }
+
+  // Stats
+  const upCount = items.filter(d => d.yoyChange > 0).length;
+  const downCount = items.filter(d => d.yoyChange < 0).length;
+  document.getElementById('up-count').textContent = `▲ ${upCount} up`;
+  document.getElementById('down-count').textContent = `▼ ${downCount} down`;
+  document.getElementById('filter-info').textContent =
+    `${items.length}개 표시 · ${STATE.primary}${STATE.secondary !== '전체' ? ' / ' + STATE.secondary : ''}`;
+}
+
+function renderCard(d) {
+  const isFav = STATE.favorites.has(d.keyword) || d.favorite;
+  const favRank = d.favoriteRank;
+  const upDown = d.yoyChange >= 0 ? 'up' : 'down';
+  const sign = d.yoyChange >= 0 ? '+' : '';
+  const yoyStr = `${sign}${d.yoyChange.toFixed(1)}%`;
+  const sparkPath = makeSparkPath(d.trendValues);
+
+  return `
+    <article class="card ${upDown}" data-kw="${d.keyword}" data-geo="${d.geo || ''}">
+      <div class="card-head">
+        <div class="card-keyword">${escapeHtml(d.keyword)}</div>
+        <button class="card-fav ${isFav ? 'active' : ''}" data-kw="${d.keyword}" title="즐겨찾기">
+          <span>${isFav ? '♥' : '♡'}</span>${favRank ? `<span class="fav-num">${favRank}</span>` : ''}
+        </button>
+      </div>
+      <div class="card-meta">
+        ${d.ticker ? `<span class="ticker">[${d.ticker}]</span>` : ''}
+        <span class="change ${upDown}">${yoyStr}</span>
+        ${d.geo ? `<span class="geo-badge">${d.geo}</span>` : ''}
+      </div>
+      <div class="card-last">last: ${Math.round(d.lastValue)}</div>
+      <svg class="spark" viewBox="0 0 100 50" preserveAspectRatio="none">
+        ${sparkPath}
+      </svg>
+    </article>
+  `;
+}
+
+function makeSparkPath(values) {
+  if (!values || values.length === 0) return '';
+  const max = Math.max(...values, 1);
+  const min = Math.min(...values, 0);
+  const range = max - min || 1;
+  const stepX = 100 / (values.length - 1 || 1);
+  const points = values.map((v, i) => {
+    const x = i * stepX;
+    const y = 50 - ((v - min) / range) * 45 - 2.5;
+    return [x, y];
+  });
+  const linePath = 'M' + points.map(p => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' L');
+  const areaPath = linePath + ` L100,50 L0,50 Z`;
+  const last = points[points.length - 1];
+  return `
+    <path class="area" d="${areaPath}"/>
+    <path class="line" d="${linePath}"/>
+    <circle class="end-dot" cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="1.5"/>
+  `;
+}
+
+function renderMeta() {
+  const lu = STATE.meta.lastUpdated;
+  if (lu) {
+    const d = new Date(lu);
+    const now = new Date();
+    const diffMin = Math.round((now - d) / 60000);
+    let timeStr;
+    if (diffMin < 1) timeStr = 'just now';
+    else if (diffMin < 60) timeStr = `${diffMin} min ago`;
+    else if (diffMin < 1440) timeStr = `${Math.round(diffMin/60)} hr ago`;
+    else timeStr = `${Math.round(diffMin/1440)} days ago`;
+    document.getElementById('last-updated').textContent = `updated ${timeStr}`;
+  }
+  document.getElementById('total-keywords').textContent = `${STATE.data.length} keywords`;
+}
+
+/* ─── ACTIONS ─── */
+function toggleFavorite(kw) {
+  if (STATE.favorites.has(kw)) STATE.favorites.delete(kw);
+  else STATE.favorites.add(kw);
+  localStorage.setItem('tm-favs', JSON.stringify([...STATE.favorites]));
+  render();
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+}
+
+/* ─── EVENTS ─── */
+document.getElementById('search').oninput = (e) => {
+  STATE.search = e.target.value;
+  renderGrid();
+};
+document.querySelectorAll('.sort-btn').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    STATE.sort = btn.dataset.sort;
+    renderGrid();
+  };
+});
+
+/* ─── INIT ─── */
+loadData();
+
+/* ─── AUTO REFRESH (every 5 min, will reload trends.json) ─── */
+setInterval(loadData, 5 * 60 * 1000);
+</script>
+
+</body>
+</html>
